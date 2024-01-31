@@ -2469,11 +2469,11 @@ RectTransform:
   m_Father: {fileID: 1851399320}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0, y: 1}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &440942287
 GameObject:
   m_ObjectHideFlags: 0
@@ -2508,11 +2508,11 @@ RectTransform:
   m_Father: {fileID: 416597119}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 25, y: -110}
-  m_SizeDelta: {x: 200, y: 20}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -30, y: -70}
+  m_SizeDelta: {x: 155, y: 20}
+  m_Pivot: {x: 1, y: 1}
 --- !u!114 &440942289
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2985,7 +2985,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 40, y: -5}
-  m_SizeDelta: {x: 147.93, y: 23}
+  m_SizeDelta: {x: 118.8, y: 19.7}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &695189454
 MonoBehaviour:
@@ -3009,7 +3009,7 @@ MonoBehaviour:
       m_Calls: []
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 18
+    m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 0
@@ -4988,22 +4988,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ViewController: {fileID: 1471711372}
   Title: 
-  tBackup: 
   Position:
     x: 0
     y: 0
     z: 0
-  pBackup:
-    x: 0
-    y: 0
-    z: 0
   Rotation: {x: 0, y: 0}
-  rBackup: {x: 0, y: 0}
   LatitudeEditor: {fileID: 1308206919}
   LongitudeEditor: {fileID: 1365471231}
   HeightEditor: {fileID: 218481059}
   RotationXEditor: {fileID: 1127966527}
   RotationYEditor: {fileID: 1863779852}
+  TitleEditor: {fileID: 459204642}
   InvalidInputScreen: {fileID: 2050749817}
   FlyToButton: {fileID: 0}
 --- !u!1 &1127966527
@@ -5089,7 +5084,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1112764175}
         m_TargetAssemblyTypeName: EditViewController, Assembly-CSharp
-        m_MethodName: UpdateLatitude
+        m_MethodName: UpdateRotationX
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1127966528}
@@ -5891,7 +5886,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1471711373}
         m_TargetAssemblyTypeName: ViewController, Assembly-CSharp
-        m_MethodName: SaveView
+        m_MethodName: CreateNewView
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -6900,8 +6895,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe864c86119ce634794f5318ab040694, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ViewObjects: []
-  EditableViews: []
   CameraGlobeAnchor: {fileID: 1630380772}
   ViewNameInputContainer: {fileID: 1482793659}
   ViewNameInput: {fileID: 2083713210}
@@ -7321,13 +7314,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: LoadViewScript, Assembly-CSharp
+      - m_Target: {fileID: 1471711373}
+        m_TargetAssemblyTypeName: ViewController, Assembly-CSharp
         m_MethodName: SaveView
-        m_Mode: 1
+        m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgument: {fileID: 2083713212}
+          m_ObjectArgumentAssemblyTypeName: TMPro.TMP_InputField, Unity.TextMeshPro
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -7843,8 +7836,8 @@ GameObject:
   - component: {fileID: 1630380775}
   - component: {fileID: 1630380772}
   - component: {fileID: 1630380771}
-  - component: {fileID: 1630380770}
   - component: {fileID: 1630380777}
+  - component: {fileID: 1630380778}
   m_Layer: 0
   m_Name: DynamicCamera
   m_TagString: MainCamera
@@ -7867,101 +7860,6 @@ Transform:
   m_Father: {fileID: 1587217787}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1630380770
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1630380768}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 275ecd2d59d942d41bf31252981978e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _flyToAltitudeProfileCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 4.76524
-      outSlope: 4.76524
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.061909087
-    - serializedVersion: 3
-      time: 0.5
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 0
-      inSlope: -4.821313
-      outSlope: -4.821313
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.0535717
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _flyToProgressCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _flyToMaximumAltitudeCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0.16666667
-      outSlope: 0.16666667
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 12000000
-      value: 2000000
-      inSlope: 0.16666667
-      outSlope: 0.16666667
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _flyToDuration: 5
-  _flyToGranularityDegrees: 0.01
 --- !u!114 &1630380771
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8084,6 +7982,102 @@ MonoBehaviour:
   _dynamicSpeedMinHeight: 20
   _enableDynamicClippingPlanes: 1
   _dynamicClippingPlanesMinHeight: 10000
+--- !u!114 &1630380778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630380768}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba181a5fd9c925249b1a51b48c7e425d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _flyToAltitudeProfileCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 4.76524
+      outSlope: 4.76524
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.061909087
+    - serializedVersion: 3
+      time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -4.821313
+      outSlope: -4.821313
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.0535717
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _flyToProgressCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _flyToMaximumAltitudeCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0.16666667
+      outSlope: 0.16666667
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 12000000
+      value: 2000000
+      inSlope: 0.16666667
+      outSlope: 0.16666667
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _flyToDuration: 5
+  _flyToGranularityDegrees: 0.01
+  _canInterruptFlight: 0
 --- !u!1 &1715286088
 GameObject:
   m_ObjectHideFlags: 0
@@ -8755,7 +8749,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1112764175}
         m_TargetAssemblyTypeName: EditViewController, Assembly-CSharp
-        m_MethodName: UpdateLongitude
+        m_MethodName: UpdateRotationY
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 1863779853}

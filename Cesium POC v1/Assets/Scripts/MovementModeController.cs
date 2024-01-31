@@ -47,6 +47,8 @@ public class MovementModeController : MonoBehaviour
         FreeMovementCameraController.enabled = isEnabled;
     }
 
+    // Assigns variables of the button using references from this game object.
+    // Needed because the button is instantiated from a prefab, without these references.
     public void AssignUIVariables(GameObject editableViewButton)
     {
         editableViewButton.GetComponent<FlyToButtonScript>().FreeMovementUI = FreeMovementUI;

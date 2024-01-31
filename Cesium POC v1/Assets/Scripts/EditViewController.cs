@@ -10,33 +10,38 @@ public class EditViewController : MonoBehaviour
 {
     public GameObject ViewController;
 
-    public string Title, tBackup;
-    public double3 Position, pBackup;
-    public Vector2 Rotation, rBackup;
+    // View is the source of truth in the application, Title, Position and Rotation
+    // are values that store the user's edits before they're committed.
+    public View View;
+    public string Title;
+    public double3 Position;
+    public Vector2 Rotation;
 
 
     public GameObject LatitudeEditor;
     public GameObject LongitudeEditor;
     public GameObject HeightEditor;
-
     public GameObject RotationXEditor;
     public GameObject RotationYEditor;
+    public GameObject TitleEditor;
 
     public GameObject InvalidInputScreen;
 
     // The button that enabled the editing screen; to 'cancel' and edit.
     public GameObject FlyToButton;
 
-    private void Awake()
+    // Sync displayed/editing values with the currently stored view
+    public void UpdateUIFields()
     {
+        Position = View.Position;
+        Rotation = View.Rotation;
+        Title = View.Name;
         LatitudeEditor.GetComponent<TMP_InputField>().text = $"{Position.x}";
         LongitudeEditor.GetComponent<TMP_InputField>().text = $"{Position.y}";
         HeightEditor.GetComponent<TMP_InputField>().text = $"{Position.z}";
         RotationXEditor.GetComponent<TMP_InputField>().text = $"{Rotation.x}";
         RotationYEditor.GetComponent<TMP_InputField>().text = $"{Rotation.y}";
-        pBackup = Position;
-        rBackup = Rotation;
-        tBackup = Title;
+        TitleEditor.GetComponent<TMP_InputField>().text = $"{Title}";
     }
 
     public void ToggleInvalidInputScreen()
@@ -49,6 +54,7 @@ public class EditViewController : MonoBehaviour
         Title = value.text;
     }
 
+    // Disallow non-numerics in position/rotation fields
     public void UpdateLatitude(TMP_InputField value)
     {
         try { Position.x = Convert.ToDouble(value.text); }
@@ -78,11 +84,11 @@ public class EditViewController : MonoBehaviour
 
     public void SaveChanges()
     {
-        ViewController.GetComponent<ViewController>().EditView(tBackup, pBackup, rBackup, Title, Position, Rotation);
-        FlyToButton.GetComponent<FlyToButtonScript>().CancelViewEditor();
+        ViewController.GetComponent<ViewController>().EditView(View, Title, Position, Rotation);
+        FlyToButton.GetComponent<FlyToButtonScript>().DisableViewEditorUI();
     }
     public void Cancel()
     {
-        FlyToButton.GetComponent<FlyToButtonScript>().CancelViewEditor();
+        FlyToButton.GetComponent<FlyToButtonScript>().DisableViewEditorUI();
     }
 }

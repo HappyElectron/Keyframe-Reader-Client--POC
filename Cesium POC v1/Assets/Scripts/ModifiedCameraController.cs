@@ -156,7 +156,7 @@ namespace CesiumForUnity
         private CesiumGeoreference _georeference;
         private CesiumGlobeAnchor _globeAnchor;
 
-        // For only one joystick at a time
+        // For only one joystick at a time, per side of screen
         private EnhancedTouch.Touch LeftTouch;
         private bool LeftTouchAssigned;
         private EnhancedTouch.Touch RightTouch;
