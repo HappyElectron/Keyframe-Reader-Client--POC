@@ -18,6 +18,9 @@ public class MovementModeController : MonoBehaviour
     public GameObject SaveNewViewButton;
     public GameObject MovementModeDropdown;
 
+    public GameObject FineCameraControls;
+    public GameObject LookSpeedControl;
+
     public void MovementModeChanged(TMP_Dropdown mode)
     {
         switch (mode.value)
@@ -40,6 +43,23 @@ public class MovementModeController : MonoBehaviour
     public void ToggleJoystickLook()
     {
         FreeMovementCameraController.JoystickLook = !FreeMovementCameraController.JoystickLook;
+        LookSpeedControl.SetActive(DynamicCamera.GetComponent<ModifiedCameraController>().JoystickLook);
+    }
+
+    public void ToggleFineCameraControls()
+    {
+        FineCameraControls.SetActive(!FineCameraControls.activeInHierarchy);
+        LookSpeedControl.SetActive(DynamicCamera.GetComponent<ModifiedCameraController>().JoystickLook);
+    }
+    
+    public void UpdateMovementSpeed(Slider slider)
+    {
+        DynamicCamera.GetComponent<ModifiedCameraController>().MovementSpeedScaler = slider.value;
+    }
+
+    public void UpdateLookSpeed(Slider slider)
+    {
+        DynamicCamera.GetComponent<ModifiedCameraController>().LookSpeedScaler = slider.value;
     }
 
     private void EnableFreeMovement(bool isEnabled)
@@ -47,8 +67,11 @@ public class MovementModeController : MonoBehaviour
         FreeMovementCameraController.enabled = isEnabled;
     }
 
-    // Assigns variables of the button using references from this game object.
-    // Needed because the button is instantiated from a prefab, without these references.
+    /// <summary>
+    /// Assigns variables of the button using references from this game object.
+    /// Needed because the button is instantiated from a prefab, without these references.
+    /// </summary>
+    /// <param name="editableViewButton"></param>
     public void AssignUIVariables(GameObject editableViewButton)
     {
         editableViewButton.GetComponent<FlyToButtonScript>().FreeMovementUI = FreeMovementUI;

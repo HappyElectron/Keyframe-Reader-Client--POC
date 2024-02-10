@@ -36,7 +36,12 @@ namespace CesiumForUnity
         // If Joystick look is disabled, panning behaviour accessible from
         // the right side of the screen will take over.
         public bool JoystickLook;
-        public int LookSpeedScaler;
+
+
+        // PlayerPrefs store these values between sessions,
+        // which are modified by the slider UI components.
+        public float LookSpeedScaler = 10;
+        public float MovementSpeedScaler = 1;
 
         public GameObject LeftJoystick;
         public GameObject RightJoystick;
@@ -648,6 +653,9 @@ namespace CesiumForUnity
 
                 this._velocity += inputDirection * this._acceleration * Time.deltaTime;
                 this._velocity = Vector3.ClampMagnitude(this._velocity, this._maxSpeed);
+
+                // TESTING SPEED DIAL ********************************************************************************************************************************
+                this._velocity *= MovementSpeedScaler;
             }
             else
             {
@@ -657,6 +665,9 @@ namespace CesiumForUnity
                     0.0f);
 
                 this._velocity = Vector3.ClampMagnitude(this._velocity, speed);
+
+                //TESTING SPEED DIAL ********************************************************************************************************************************
+                this._velocity *= MovementSpeedScaler;
             }
 
             if (this._velocity != Vector3.zero)
