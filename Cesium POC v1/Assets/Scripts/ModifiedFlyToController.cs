@@ -9,13 +9,16 @@ namespace CesiumForUnity
     /// A controller that can smoothly fly to locations around the globe while 
     /// offering control over the characteristics of its flights.
     /// 
-    /// 'Modified' just means I've flipped CanInterruptMovement from private to public,
-    /// because I didn't like brushing my thumbs on the screen and cancelling the flyto.
+    /// ************************************************************************************************************************************************
     /// 
-    /// Because Cesium is installed as a package, I cannot edit the original script directly.
+    ///     'Modified' just means I've flipped CanInterruptMovement from private to public,
+    ///     because I didn't like brushing my thumbs on the screen and cancelling the flyto.
     /// 
-    /// Should probably be public already, Cesium.
+    ///     Because Cesium is installed as a package, I cannot edit the original script directly.
     /// 
+    ///     Should probably be public already, Cesium.
+    ///     
+    ///     - Ned
     /// </summary>
     /// <remarks>
     /// This controller is compatible with CesiumCameraController. During flights,

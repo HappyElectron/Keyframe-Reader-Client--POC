@@ -109,7 +109,6 @@ public class ViewController : MonoBehaviour
 
     public void OpenViewSelect()
     {
-        JoystickLookToggle.SetActive(ViewScroll.activeInHierarchy);
         ViewScroll.SetActive(!ViewScroll.activeInHierarchy);
     }
 

@@ -20,7 +20,11 @@ public class MovementModeController : MonoBehaviour
 
     public GameObject FineCameraControls;
     public GameObject LookSpeedControl;
+    public GameObject EditInSceneUI;
+    public GameObject EditInSceneViewTitle;
 
+    public GameObject RecentViews;
+    public GameObject RecentViewsScroll;
     public void MovementModeChanged(TMP_Dropdown mode)
     {
         switch (mode.value)
@@ -79,5 +83,9 @@ public class MovementModeController : MonoBehaviour
         editableViewButton.GetComponent<FlyToButtonScript>().ViewSelectUI = ViewSelectUI;
         editableViewButton.GetComponent<FlyToButtonScript>().SaveNewViewButton = SaveNewViewButton;
         editableViewButton.GetComponent<FlyToButtonScript>().MovementModeDropdown = MovementModeDropdown;
+        editableViewButton.GetComponent<FlyToButtonScript>().EditInSceneUI = EditInSceneUI;
+        editableViewButton.GetComponent<FlyToButtonScript>().RecentViews = RecentViews;
+        editableViewButton.GetComponent<FlyToButtonScript>().RecentViewsScroll = RecentViewsScroll;
+        editableViewButton.GetComponent<FlyToButtonScript>().EditInSceneViewTitle = EditInSceneViewTitle;
     }
 }

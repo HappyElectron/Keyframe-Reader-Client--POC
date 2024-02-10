@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Mathematics;
 using System;
 using TMPro;
+using UnityEngine.Rendering;
 
 
 public class EditViewController : MonoBehaviour
@@ -90,5 +91,13 @@ public class EditViewController : MonoBehaviour
     public void Cancel()
     {
         FlyToButton.GetComponent<FlyToButtonScript>().DisableViewEditorUI();
+    }
+
+    
+    // Open the in-scene view editing phase.
+    // Button binds here because the FlyToButton is a prefab, cannot bind directly.
+    public void OpenEditInSceneUI()
+    {
+        FlyToButton.GetComponent<FlyToButtonScript>().OpenEditInSceneUI();
     }
 }

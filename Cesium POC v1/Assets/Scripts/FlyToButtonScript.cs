@@ -19,10 +19,19 @@ public class FlyToButtonScript : MonoBehaviour
     public GameObject FreeMovementUI;
     public GameObject EditingViewUI;
     public GameObject ViewSelectUI;
+
     public GameObject SaveNewViewButton;
     public GameObject MovementModeDropdown;
 
     public GameObject ViewController;
+
+    public GameObject RecentViews;
+    public GameObject RecentViewsScroll;
+
+    public GameObject EditInSceneUI;
+    public GameObject EditInSceneViewTitle;
+
+    private int FreeMovementPhaseID = 0;
 
     private void Awake()
     {
@@ -78,5 +87,34 @@ public class FlyToButtonScript : MonoBehaviour
         gameObject.transform.GetChild(0).GetComponent<TMP_Text>().text = View.Name;
         gameObject.transform.GetChild(1).GetComponent<TMP_Text>().text = "Position: " + Math.Round(View.Position.x, 3) + ", " + Math.Round(View.Position.y, 3) + ", " + Math.Round(View.Position.z, 3);
         gameObject.transform.GetChild(2).GetComponent<TMP_Text>().text = "Rotation: " + Math.Round(View.Rotation.x, 3) + " " + Math.Round(View.Rotation.y, 3);
+    }
+
+
+    // Enable/Disable UI components to edit a view with the free camera controls.
+    public void OpenEditInSceneUI()
+    {
+        EditingViewUI.SetActive(false);
+        FreeMovementUI.SetActive(true);
+        RecentViews.SetActive(false);
+        RecentViewsScroll.SetActive(false);
+        EditInSceneUI.SetActive(true);
+
+        Camera.GetComponent<ModifiedCameraController>().enabled = true;
+
+
+        EditInSceneUI.GetComponent<EditViewInSceneController>().View = View;
+        EditInSceneUI.GetComponent<EditViewInSceneController>().FlyToButton = this.gameObject;
+        EditInSceneViewTitle.GetComponent<TMP_InputField>().text = View.Name;
+    }
+
+    public void DisableEditInSceneUI()
+    {
+        EditingViewUI.SetActive(false);
+        RecentViews.SetActive(true);
+        EditInSceneUI.SetActive(false);
+        SaveNewViewButton.SetActive(true);
+        MovementModeDropdown.SetActive(true);
+
+        MovementModeDropdown.GetComponent<TMP_Dropdown>().value = FreeMovementPhaseID;
     }
 }
