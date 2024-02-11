@@ -8,12 +8,17 @@ using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 
-public class View
+[Serializable]
+public class ViewData
 {
     public string Name;
     public double3 Position;
     public Vector2 Rotation;
+}
 
+public class View
+{
+    public ViewData ViewData;
     public GameObject SmallViewGameObj;
     public GameObject EditableViewGameObj;
 }
