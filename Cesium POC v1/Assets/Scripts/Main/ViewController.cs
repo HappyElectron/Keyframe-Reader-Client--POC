@@ -2,11 +2,14 @@ using CesiumForUnity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using TMPro;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Networking;
 
 [Serializable]
 public class ViewData
@@ -27,7 +30,9 @@ public class ViewController : MonoBehaviour
 {
     public List<View> Views = new List<View>();
 
+    public GameObject DynamicCamera;
     public CesiumGlobeAnchor CameraGlobeAnchor;
+    public GameObject CesiumGeoreference;
 
     public GameObject ViewNameInputContainer;
     public GameObject ViewNameInput;
@@ -36,18 +41,78 @@ public class ViewController : MonoBehaviour
     public GameObject ViewScrollContent;
     public GameObject JoystickLookToggle;
 
-    public GameObject DynamicCamera;
-
     // Reference to ui element prefab.
     public GameObject FlyToPrefab;
 
+    public GameObject MovementModeController;
     public TMP_Dropdown MovementModeSelect;
 
     public GameObject ViewEditScreen;
     public GameObject ViewEditScreenScrollContent;
     public GameObject EditableViewPrefab;
 
-    public GameObject MovementModeController;
+    // JSON fields
+    string SaveFilePath;
+
+    string SelectedViewsetIdsPath;
+    string SelectedTilesetIdsPath;
+
+    SerializableStringSetContainer ViewsetIds;
+    SerializableStringSetContainer TilesetIds;
+
+    public GameObject TilesetToDup;
+
+    private void Awake()
+    {
+        SaveFilePath = Application.persistentDataPath + "/PlayerData.json";
+
+        SelectedViewsetIdsPath = Application.persistentDataPath + "/viewsetsToLoad";
+        SelectedTilesetIdsPath = Application.persistentDataPath + "/tilesetsToLoad";
+
+        ViewsetIds = JsonUtility.FromJson<SerializableStringSetContainer>(File.ReadAllText(SelectedViewsetIdsPath));
+        TilesetIds = JsonUtility.FromJson<SerializableStringSetContainer>(File.ReadAllText(SelectedTilesetIdsPath));
+
+        // Instantiate a gameobject with a tileset component for each id from ION
+        // Instantiating from a prefab does not work FSR, but this does.
+        // Will investigate later.
+        foreach(string strId in TilesetIds.set)
+        {
+            var tileset = Instantiate(TilesetToDup, TilesetToDup.transform.parent);
+            tileset.GetComponent<Cesium3DTileset>().ionAssetID = int.Parse(strId);
+            tileset.SetActive(true);
+        }
+
+        foreach(string strId in ViewsetIds.set)
+        {
+            StartCoroutine(GetGeoJSON(strId));
+        }
+    }
+
+    private IEnumerator GetGeoJSON(string strId)
+    {
+        Debug.Log("In ienumerator");
+
+        // Get archive info
+        string archivesUrl = $"https://api.cesium.com/v1/assets/{strId}/archives";
+        UnityWebRequest assetArchives = UnityWebRequest.Get(archivesUrl);
+        assetArchives.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE");
+        yield return assetArchives.SendWebRequest();
+        string output = assetArchives.downloadHandler.text;
+        Debug.Log(output);
+        ListOfArchiveAssets listOfAssetArchives = JsonUtility.FromJson<ListOfArchiveAssets>(output);
+        Debug.Log(listOfAssetArchives.items);
+        string assetArchiveId = listOfAssetArchives.items.First().id.ToString();
+
+        string archiveUrl = $"https://api.cesium.com/v1/assets/{strId}/archives/{assetArchiveId}/download";
+        UnityWebRequest archive = UnityWebRequest.Get(archiveUrl);
+        archive.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE");
+        yield return archive.SendWebRequest();
+        output = archive.downloadHandler.text;
+
+        Debug.Log(output);
+    }
+
+
     // Bring up confirmation dialogue.
     public void CreateNewView()
     {
@@ -67,10 +132,13 @@ public class ViewController : MonoBehaviour
 
         View view = new View()
         {
-            Name = name.text,
-            Position = CameraGlobeAnchor.longitudeLatitudeHeight,
-            Rotation = new Vector2((180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).x,
+            ViewData = new ViewData()
+            {
+                Name = name.text,
+                Position = CameraGlobeAnchor.longitudeLatitudeHeight,
+                Rotation = new Vector2((180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).x,
                                                         (180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).y)
+            }
         };
 #pragma warning restore
         Views.Add(view);
@@ -119,9 +187,9 @@ public class ViewController : MonoBehaviour
 
     public void EditView(View view, string title, double3 position, Vector2 rotation)
     {
-        view.Position = position;
-        view.Rotation = rotation;
-        view.Name = title;
+        view.ViewData.Position = position;
+        view.ViewData.Rotation = rotation;
+        view.ViewData.Name = title;
 
         view.SmallViewGameObj.GetComponent<FlyToButtonScript>().UpdateSmallUIFields();
         view.EditableViewGameObj.GetComponent<FlyToButtonScript>().UpdateEditableUIFields();
@@ -134,5 +202,32 @@ public class ViewController : MonoBehaviour
         Destroy(View.SmallViewGameObj);
         Views.Remove(View);
     }
+
+    public void SaveViewChanges()
+    {
+        File.Delete(SaveFilePath);
+        Debug.Log(SaveFilePath);
+
+        foreach(var view in Views)
+        {
+            ViewData viewData = view.ViewData;
+            string SaveViewData = JsonUtility.ToJson(viewData);
+            File.AppendAllText(SaveFilePath, SaveViewData);
+        }
+    }
 }
 
+
+public class ArchiveAsset
+{
+    public int id { get; set; }
+    public int assetId { get; set; }
+    public string format { get; set; }
+    public string status { get; set; }
+    public int bytesArchived { get; set; }
+}
+
+public class ListOfArchiveAssets
+{
+    public List<ArchiveAsset> items { get; set; }
+}

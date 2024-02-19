@@ -34,9 +34,9 @@ public class EditViewController : MonoBehaviour
     // Sync displayed/editing values with the currently stored view
     public void UpdateUIFields()
     {
-        Position = View.Position;
-        Rotation = View.Rotation;
-        Title = View.Name;
+        Position = View.ViewData.Position;
+        Rotation = View.ViewData.Rotation;
+        Title = View.ViewData.Name;
         LatitudeEditor.GetComponent<TMP_InputField>().text = $"{Position.x}";
         LongitudeEditor.GetComponent<TMP_InputField>().text = $"{Position.y}";
         HeightEditor.GetComponent<TMP_InputField>().text = $"{Position.z}";
