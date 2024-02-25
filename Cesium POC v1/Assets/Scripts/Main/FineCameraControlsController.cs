@@ -6,7 +6,6 @@ using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
-using static UnityEditor.FilePathAttribute;
 
 public class FineCameraControlsController : MonoBehaviour
 {

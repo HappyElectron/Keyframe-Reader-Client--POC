@@ -1,4 +1,5 @@
 using CesiumForUnity;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -90,26 +91,28 @@ public class ViewController : MonoBehaviour
 
     private IEnumerator GetGeoJSON(string strId)
     {
-        Debug.Log("In ienumerator");
-
         // Get archive info
+        
         string archivesUrl = $"https://api.cesium.com/v1/assets/{strId}/archives";
         UnityWebRequest assetArchives = UnityWebRequest.Get(archivesUrl);
         assetArchives.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE");
         yield return assetArchives.SendWebRequest();
         string output = assetArchives.downloadHandler.text;
-        Debug.Log(output);
-        ListOfArchiveAssets listOfAssetArchives = JsonUtility.FromJson<ListOfArchiveAssets>(output);
-        Debug.Log(listOfAssetArchives.items);
+        ListOfArchiveAssets listOfAssetArchives = JsonConvert.DeserializeObject<ListOfArchiveAssets>(output);
         string assetArchiveId = listOfAssetArchives.items.First().id.ToString();
 
         string archiveUrl = $"https://api.cesium.com/v1/assets/{strId}/archives/{assetArchiveId}/download";
+        archiveUrl = "https://api.cesium.com/v1/assets/2465192/archives/60561/download";
         UnityWebRequest archive = UnityWebRequest.Get(archiveUrl);
-        archive.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE");
-        yield return archive.SendWebRequest();
-        output = archive.downloadHandler.text;
 
-        Debug.Log(output);
+        string accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE";
+        archive.SetRequestHeader("Authorization", "Bearer " + accessToken);
+
+        yield return archive.SendWebRequest();
+
+        byte[] assetData = archive.downloadHandler.data;
+        Debug.Log(archive.downloadHandler.text);
+        File.WriteAllBytes("Assets/DownloadedFiles/asset_archive.txt", assetData);
     }
 
 

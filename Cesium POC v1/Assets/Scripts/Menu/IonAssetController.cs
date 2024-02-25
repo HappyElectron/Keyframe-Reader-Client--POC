@@ -12,7 +12,7 @@ using UnityEngine.SceneManagement;
 
 public class IonAssetController : MonoBehaviour
 {
-    public TMP_InputField IONToken;
+    public TMP_Dropdown IONToken;
     public GameObject TokenErrorScreen;
     public TMP_Text TokenErrorScreenReason;
 
@@ -32,15 +32,51 @@ public class IonAssetController : MonoBehaviour
     string ViewsetPath;
     string TilesetPath;
 
+    public Dictionary<string, string> Tokens = new Dictionary<string, string>();
+
     private void Awake()
     {
         ViewsetPath = Application.persistentDataPath + "/viewsetsToLoad";
         TilesetPath = Application.persistentDataPath + "/tilesetsToLoad";
+
+        StartCoroutine(GetTokens());
     }
 
-    public void RefreshAssetList()
+    /// <summary>
+    /// Retrieve a list of cesium ION tokens, and initialise the dropdown values
+    /// </summary>
+    /// <returns></returns>
+    private IEnumerator GetTokens()
     {
-        StartCoroutine(SendGetAssetListRequest());
+        string IONTokenURLs = "https://api.cesium.com/v2/tokens";
+        UnityWebRequest unityWebRequest = UnityWebRequest.Get(IONTokenURLs);
+
+        // I don't really know what's happening here - building for xcode might explain?
+        string accessToken = CesiumIonServer.defaultServer.defaultIonAccessToken;
+
+        unityWebRequest.SetRequestHeader("Authorization", "Bearer " + accessToken);
+        yield return unityWebRequest.SendWebRequest();
+
+        TokenList myDeserializedClass = JsonConvert.DeserializeObject<TokenList>(unityWebRequest.downloadHandler.text);
+
+        IONToken.options.Clear();
+        Tokens.Clear();
+        foreach (TokenItem t in myDeserializedClass.items)
+        {
+            IONToken.options.Add(new TMP_Dropdown.OptionData() { text = t.name, image = null });
+            Tokens.Add(t.name, t.token);
+        }
+    }
+
+    /// <summary>
+    /// Called by UI, on dropdown change
+    /// Updates the token used to pull assets.
+    /// </summary>
+    /// <param name="token"></param>
+    public void RefreshAssetList(TMP_Dropdown token)
+    {
+        string tokenString = Tokens[token.options[token.value].text];
+        StartCoroutine(SendGetAssetListRequest(tokenString));
     }
 
 
@@ -48,14 +84,16 @@ public class IonAssetController : MonoBehaviour
     /// Retrieve all ION assets accessible by the given token
     /// </summary>
     /// <returns></returns>
-    public IEnumerator SendGetAssetListRequest() {
+    public IEnumerator SendGetAssetListRequest(string token) {
         //Modelled cURL request: 'curl "https://api.cesium.com/v1/assets" -H "Authorization: Bearer <your_access_token>"'
         UnityWebRequest request = UnityWebRequest.Get("https://api.cesium.com/v1/assets");
-        request.SetRequestHeader("Authorization", "Bearer " + IONToken.text);
+        request.SetRequestHeader("Authorization", "Bearer " + token);
 
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError) {
+            // SHOULD be the only two errors possible...
+            // Haven't included anything for if ION is down. Maybe later.
             if (request.error == "HTTP/1.1 401 Unauthorized")
                 ShowTokenErrorScreen("Invalid token");
             if (request.error == "HTTP/1.1 404 Not Found")
@@ -193,4 +231,22 @@ public class IONMetadataObject
 public class Root
 {
     public List<IONMetadataObject> items { get; set; }
+}
+
+public class TokenItem
+{
+    public string id { get; set; }
+    public string name { get; set; }
+    public string token { get; set; }
+    public bool isDefault { get; set; }
+    public DateTime dateLastUsed { get; set; }
+    public DateTime dateAdded { get; set; }
+    public DateTime dateModified { get; set; }
+    public List<string> scopes { get; set; }
+    public object allowedUrls { get; set; }
+}
+
+public class TokenList
+{
+    public List<TokenItem> items { get; set; }
 }
