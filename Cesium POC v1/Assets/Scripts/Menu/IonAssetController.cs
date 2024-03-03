@@ -12,9 +12,11 @@ using UnityEngine.SceneManagement;
 
 public class IonAssetController : MonoBehaviour
 {
-    public TMP_Dropdown IONToken;
+    public TMP_Dropdown IONTokenDropdown;
     public GameObject TokenErrorScreen;
     public TMP_Text TokenErrorScreenReason;
+
+    string TokenString;
 
     public GameObject ViewsetScrollviewContent;
     public GameObject TilesetScrollviewContent;
@@ -38,7 +40,7 @@ public class IonAssetController : MonoBehaviour
     {
         ViewsetPath = Application.persistentDataPath + "/viewsetsToLoad";
         TilesetPath = Application.persistentDataPath + "/tilesetsToLoad";
-
+        Debug.Log(Application.persistentDataPath);
         StartCoroutine(GetTokens());
     }
 
@@ -59,11 +61,14 @@ public class IonAssetController : MonoBehaviour
 
         TokenList myDeserializedClass = JsonConvert.DeserializeObject<TokenList>(unityWebRequest.downloadHandler.text);
 
-        IONToken.options.Clear();
+        // Unity dropdowns have a bug where the first option in the dropdown is initialised as selected.
+        // The best (still painfull) solution I could find meant adding a blank option to the optionset.
+        IONTokenDropdown.options.Clear();
+        IONTokenDropdown.options.Add(new TMP_Dropdown.OptionData() { text = "", image = null });
         Tokens.Clear();
         foreach (TokenItem t in myDeserializedClass.items)
         {
-            IONToken.options.Add(new TMP_Dropdown.OptionData() { text = t.name, image = null });
+            IONTokenDropdown.options.Add(new TMP_Dropdown.OptionData() { text = t.name, image = null });
             Tokens.Add(t.name, t.token);
         }
     }
@@ -75,8 +80,11 @@ public class IonAssetController : MonoBehaviour
     /// <param name="token"></param>
     public void RefreshAssetList(TMP_Dropdown token)
     {
-        string tokenString = Tokens[token.options[token.value].text];
-        StartCoroutine(SendGetAssetListRequest(tokenString));
+        // Will throw an error when the dropdown value is set to the blank buffer option,
+        // Or when a token with a null name is selected.
+        try { TokenString = Tokens[token.options[token.value].text]; }
+        catch { TokenString = ""; }
+        StartCoroutine(SendGetAssetListRequest(TokenString, token));
     }
 
 
@@ -84,7 +92,7 @@ public class IonAssetController : MonoBehaviour
     /// Retrieve all ION assets accessible by the given token
     /// </summary>
     /// <returns></returns>
-    public IEnumerator SendGetAssetListRequest(string token) {
+    public IEnumerator SendGetAssetListRequest(string token, TMP_Dropdown dropdown) {
         //Modelled cURL request: 'curl "https://api.cesium.com/v1/assets" -H "Authorization: Bearer <your_access_token>"'
         UnityWebRequest request = UnityWebRequest.Get("https://api.cesium.com/v1/assets");
         request.SetRequestHeader("Authorization", "Bearer " + token);
@@ -98,6 +106,7 @@ public class IonAssetController : MonoBehaviour
                 ShowTokenErrorScreen("Invalid token");
             if (request.error == "HTTP/1.1 404 Not Found")
                 ShowTokenErrorScreen("Token requires list, read, and write permissions");
+            dropdown.value = 0;
         }
         else {
             // Deserialize data, split into sets of keyframe views, and non-geojson data (ie tilesets)
@@ -148,13 +157,21 @@ public class IonAssetController : MonoBehaviour
 
     public void OpenMainScene()
     {
+        if(IONTokenDropdown.value == 0)
+        {
+            ShowTokenErrorScreen("Token not selected");
+            return;
+        }
         SerializableStringSetContainer ViewsetIdsContainer = new();
         SerializableStringSetContainer TilesetIdsContainer = new();
 
         ViewsetIdsContainer.set = ViewsetContainers.Where(x => x.Active).Select(x => x.Data.id.ToString()).ToList();
         File.WriteAllText(ViewsetPath, JsonUtility.ToJson(ViewsetIdsContainer));
+
         TilesetIdsContainer.set = TilesetContainers.Where(x => x.Active).Select(x => x.Data.id.ToString()).ToList();
         File.WriteAllText(TilesetPath, JsonUtility.ToJson(TilesetIdsContainer));
+
+        CesiumIonServer.defaultServer.defaultIonAccessToken = TokenString;
 
         SceneManager.LoadScene("Main");
     }

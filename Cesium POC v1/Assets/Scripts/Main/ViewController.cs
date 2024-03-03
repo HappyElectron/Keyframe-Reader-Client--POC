@@ -4,13 +4,18 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using TMPro;
 using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
+using static UnityEditor.Rendering.CameraUI;
 
 [Serializable]
 public class ViewData
@@ -63,12 +68,16 @@ public class ViewController : MonoBehaviour
 
     public GameObject TilesetToDup;
 
-    private void Awake()
+    string IONAccessToken;
+
+    private async void Awake()
     {
         SaveFilePath = Application.persistentDataPath + "/PlayerData.json";
 
         SelectedViewsetIdsPath = Application.persistentDataPath + "/viewsetsToLoad";
         SelectedTilesetIdsPath = Application.persistentDataPath + "/tilesetsToLoad";
+
+        IONAccessToken = CesiumIonServer.defaultServer.defaultIonAccessToken;
 
         ViewsetIds = JsonUtility.FromJson<SerializableStringSetContainer>(File.ReadAllText(SelectedViewsetIdsPath));
         TilesetIds = JsonUtility.FromJson<SerializableStringSetContainer>(File.ReadAllText(SelectedTilesetIdsPath));
@@ -76,45 +85,80 @@ public class ViewController : MonoBehaviour
         // Instantiate a gameobject with a tileset component for each id from ION
         // Instantiating from a prefab does not work FSR, but this does.
         // Will investigate later.
-        foreach(string strId in TilesetIds.set)
-        {
+        foreach(string strId in TilesetIds.set) {
             var tileset = Instantiate(TilesetToDup, TilesetToDup.transform.parent);
             tileset.GetComponent<Cesium3DTileset>().ionAssetID = int.Parse(strId);
             tileset.SetActive(true);
         }
 
-        foreach(string strId in ViewsetIds.set)
-        {
-            StartCoroutine(GetGeoJSON(strId));
+        // Download & extracts archives for every viewset selected (as of 2024/03/03, should be only 1 at a time)
+        // File names are {assetId}.zip and {assetId}, respectively.
+        // Clears old files first.
+        Directory.Delete(Application.persistentDataPath + "/archives",true);
+        Directory.CreateDirectory(Application.persistentDataPath + "/archives");
+        foreach(string strId in ViewsetIds.set) {
+            string archivesUrl = $"https://api.cesium.com/v1/assets/{strId}/archives";
+            await sendRequest(archivesUrl, strId);
         }
     }
 
-    private IEnumerator GetGeoJSON(string strId)
+    /// <summary>
+    /// Download information about an asset's available archives, and then download the first available archive.
+    /// 
+    /// First tried doing this with UnityWebRequests, which did not work. 
+    /// I still don't know why, it wasted a LOT of time.
+    /// </summary>
+    /// <param name="url"></param>
+    /// <param name="assetId"></param>
+    /// <returns></returns>
+    async Task sendRequest(string url, string assetId)
     {
-        // Get archive info
-        
-        string archivesUrl = $"https://api.cesium.com/v1/assets/{strId}/archives";
-        UnityWebRequest assetArchives = UnityWebRequest.Get(archivesUrl);
-        assetArchives.SetRequestHeader("Authorization", "Bearer " + "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE");
-        yield return assetArchives.SendWebRequest();
-        string output = assetArchives.downloadHandler.text;
-        ListOfArchiveAssets listOfAssetArchives = JsonConvert.DeserializeObject<ListOfArchiveAssets>(output);
-        string assetArchiveId = listOfAssetArchives.items.First().id.ToString();
+        string SpecificArchiveURL = "";
 
-        string archiveUrl = $"https://api.cesium.com/v1/assets/{strId}/archives/{assetArchiveId}/download";
-        archiveUrl = "https://api.cesium.com/v1/assets/2465192/archives/60561/download";
-        UnityWebRequest archive = UnityWebRequest.Get(archiveUrl);
+        // Get information about the archives available
+        using (HttpClient client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + IONAccessToken);
 
-        string accessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzZmQzNTAxOS01ODU4LTQxNzktOTUxMy1hY2U1MWJiZGI0YjYiLCJpZCI6MTg3MDM3LCJpYXQiOjE3MDgyMTIzNDl9.Mld81dY1EHqZMN4dTWbpdC_ROHZLSzrkFBTVQOXZuQE";
-        archive.SetRequestHeader("Authorization", "Bearer " + accessToken);
+            try {
+                HttpResponseMessage response = await client.GetAsync(new Uri(url));
 
-        yield return archive.SendWebRequest();
+                // On success, obtain the url of the archive from the request. 
+                if (response.IsSuccessStatusCode)
+                {
+                    string archiveIds = await response.Content.ReadAsStringAsync();
+                    ListOfArchiveAssets listOfAssetArchiveIds = JsonConvert.DeserializeObject<ListOfArchiveAssets>(archiveIds);
 
-        byte[] assetData = archive.downloadHandler.data;
-        Debug.Log(archive.downloadHandler.text);
-        File.WriteAllBytes("Assets/DownloadedFiles/asset_archive.txt", assetData);
+                    // Only ever want 1 archive - there should not be multiple available, at least in our context.
+                    string assetArchiveId = listOfAssetArchiveIds.items.First().id.ToString();
+                    SpecificArchiveURL = $"https://api.cesium.com/v1/assets/{assetId}/archives/{assetArchiveId}/download";
+                } 
+                else { Debug.LogError("Error during download. Status code: " + response.StatusCode); }
+            } catch (Exception e) { Debug.LogError("Exception during download: " + e.Message); }
+        }
+
+        // Download the specific archive
+        using (HttpClient client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Add("Authorization", "Bearer " + IONAccessToken);
+
+            try {
+                HttpResponseMessage response = await client.GetAsync(new Uri(SpecificArchiveURL));
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Save the archive to a zip file, extract
+                    byte[] content = await response.Content.ReadAsByteArrayAsync();
+
+                    string zipPath = Application.persistentDataPath + "/archives/" + assetId + ".zip";
+                    string extractPath = Application.persistentDataPath + "/archives/" + assetId;
+                    File.WriteAllBytes(zipPath, content);
+                    ZipFile.ExtractToDirectory(zipPath, extractPath);
+                } 
+                else { Debug.LogError("Error during download. Status code: " + response.StatusCode); }
+            } catch (Exception e) { Debug.LogError("Exception during download: " + e.Message); }
+        }
     }
-
 
     // Bring up confirmation dialogue.
     public void CreateNewView()
