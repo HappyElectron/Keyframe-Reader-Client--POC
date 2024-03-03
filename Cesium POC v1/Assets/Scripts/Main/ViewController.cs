@@ -94,11 +94,17 @@ public class ViewController : MonoBehaviour
         // Download & extracts archives for every viewset selected (as of 2024/03/03, should be only 1 at a time)
         // File names are {assetId}.zip and {assetId}, respectively.
         // Clears old files first.
-        Directory.Delete(Application.persistentDataPath + "/archives",true);
+        Directory.Delete(Application.persistentDataPath + "/archives", true);
         Directory.CreateDirectory(Application.persistentDataPath + "/archives");
         foreach(string strId in ViewsetIds.set) {
             string archivesUrl = $"https://api.cesium.com/v1/assets/{strId}/archives";
             await sendRequest(archivesUrl, strId);
+            string serializedView = File.ReadAllText(Application.persistentDataPath + $"/archives/{strId}/doc.geojson");
+            List<ViewData> deserializedViews = JsonConvert.DeserializeObject<List<ViewData>>(serializedView);
+            foreach(ViewData view in deserializedViews)
+            {
+                CreateNewView(view.Name, view.Position, view.Rotation);
+            }
         }
     }
 
@@ -161,33 +167,40 @@ public class ViewController : MonoBehaviour
     }
 
     // Bring up confirmation dialogue.
-    public void CreateNewView()
+    public void CreateNewViewDialogue()
     {
         DynamicCamera.GetComponent<ModifiedCameraController>().enabled = false;
         ViewNameInputContainer.SetActive(true);
     }
 
+    // Storing the current view in memory.
     // Method for accepting confirmation dialogue, via button press.
-    // Creates a 'View' object, which holds view metadata, and two
-    // UI components based off said View.
-    public void SaveView(TMP_InputField name)
+    public void SaveViewFromCameraPosition(TMP_InputField name)
     {
         // Deprecated quaternion conversion used here over modern function because Unity has it's own q class,
         // meaning the math.q conversion does not call correctly. Requires degrees/radian conversion.
         // Warning disabled to clear console clutter.
 #pragma warning disable
+        CreateNewView(name.text, CameraGlobeAnchor.longitudeLatitudeHeight,
+            new Vector2((180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).x,
+                        (180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).y));
+#pragma warning restore
 
+    }
+
+    // Creates a 'View' object, which holds view metadata, and two
+    // UI components based off said View.
+    public void CreateNewView(string name, double3 position, Vector2 rotation)
+    {
         View view = new View()
         {
             ViewData = new ViewData()
             {
-                Name = name.text,
-                Position = CameraGlobeAnchor.longitudeLatitudeHeight,
-                Rotation = new Vector2((180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).x,
-                                                        (180 / math.PI) * Quaternion.ToEulerAngles(CameraGlobeAnchor.rotationEastUpNorth).y)
+                Name = name,
+                Position = position,
+                Rotation = rotation
             }
         };
-#pragma warning restore
         Views.Add(view);
 
         view.SmallViewGameObj = CreateSmallViewButton(view);
@@ -196,9 +209,11 @@ public class ViewController : MonoBehaviour
 
         ViewNameInputContainer.SetActive(false);
 
-        if(MovementModeSelect.value == 0)
+        if (MovementModeSelect.value == 0)
             DynamicCamera.GetComponent<ModifiedCameraController>().enabled = true;
     }
+
+
 
     private GameObject CreateSmallViewButton(View view)
     {
@@ -255,12 +270,14 @@ public class ViewController : MonoBehaviour
         File.Delete(SaveFilePath);
         Debug.Log(SaveFilePath);
 
+        File.AppendAllText(SaveFilePath,"[");
         foreach(var view in Views)
         {
             ViewData viewData = view.ViewData;
             string SaveViewData = JsonUtility.ToJson(viewData);
-            File.AppendAllText(SaveFilePath, SaveViewData);
+            File.AppendAllText(SaveFilePath, SaveViewData + ",");
         }
+        File.AppendAllText(SaveFilePath, "]");
     }
 }
 

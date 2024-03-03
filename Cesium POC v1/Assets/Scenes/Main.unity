@@ -4414,6 +4414,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   FlyToController: {fileID: 1630380778}
+  DisableLocationTracking: 0
   locationAccuracy: 0.5
   locationUpdateFloor: 0.5
 --- !u!4 &493683182
@@ -10705,7 +10706,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1471711373}
         m_TargetAssemblyTypeName: ViewController, Assembly-CSharp
-        m_MethodName: CreateNewView
+        m_MethodName: CreateNewViewDialogue
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -13925,7 +13926,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1471711373}
         m_TargetAssemblyTypeName: ViewController, Assembly-CSharp
-        m_MethodName: SaveView
+        m_MethodName: SaveViewFromCameraPosition
         m_Mode: 2
         m_Arguments:
           m_ObjectArgument: {fileID: 2083713212}

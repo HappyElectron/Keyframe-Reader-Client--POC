@@ -3,41 +3,60 @@ using System.Collections;
 using CesiumForUnity;
 using Unity.Mathematics;
 
+/// <summary>
+/// Enables the behaviour of flying to the user's device location.
+/// 
+/// Higher accuracy (values approaching 0) will drain battery significantly faster.
+/// 
+/// Since high precision is kind of important for this application, but the user likely 
+/// isn't going to snap to their location too often, it may be appropriate to enable/disable 
+/// location services as they're needed. Unfortunately, this is quite slow. 
+/// I have left this setting optionally enabled.
+/// 
+/// </summary>
+
 public class LocationManagerScript : MonoBehaviour
 {
     public ModifiedFlyToController FlyToController;
 
-    /// <summary>
-    /// Accuracy of the precise location handling.
-    /// Higher accuracy (values approaching 0) will drain battery significantly faster.
-    /// 
-    /// Since high precision is kind of important for this application, but the user likely 
-    /// isn't going to snap to their location too often, it may be appropriate to enable/disable 
-    /// location services as they're needed. Unfortunately, this is quite slow.
-    /// 
-    /// </summary>
+    // If true, will dynamically enable location tracking, as opposed to just leaving it on.
+    public bool DisableLocationTracking;
+
     public float locationAccuracy = 0.5f;
     public float locationUpdateFloor = 0.5f;
 
-    public bool flyToDeviceLocationOnAwake = false;
 
     private void Awake()
     {
-        if (flyToDeviceLocationOnAwake)
-            StartCoroutine(FlyToDeviceLocation());
+        StartCoroutine(EnableLocationService());
     }
 
     public void FlyToButton()
     {
-        StartCoroutine (FlyToDeviceLocation());
+        if (DisableLocationTracking)
+            StartCoroutine(EnableLocationService());
+        else
+            FlyToDeviceLocation();
+        }
+
+    void FlyToDeviceLocation()
+    {
+        FlyToController.FlyToLocationLongitudeLatitudeHeight(
+    new double3(Input.location.lastData.longitude, Input.location.lastData.latitude, Input.location.lastData.altitude),
+    0, 0, false);
     }
-    public IEnumerator FlyToDeviceLocation()
+    
+
+    /// <summary>
+    /// Enable location tracking, fly to the device's current location.
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator EnableLocationService()
     {
         Debug.Log("Enabling location services...");
         // For testing
         #if UNITY_EDITOR
                 yield return new WaitWhile(() => !UnityEditor.EditorApplication.isRemoteConnected);
-                yield return new WaitForSecondsRealtime(5f);
         #elif UNITY_IOS
             if (!UnityEngine.Input.location.isEnabledByUser) {
                 Debug.LogFormat("IOS and Location not enabled");
@@ -81,13 +100,15 @@ public class LocationManagerScript : MonoBehaviour
         {
             Debug.LogFormat("Location service live. status {0}", Input.location.status);
             
-            // Fly to device location
             FlyToController.FlyToLocationLongitudeLatitudeHeight(
-                new double3(Input.location.lastData.latitude, Input.location.lastData.longitude, Input.location.lastData.altitude),
+                new double3(Input.location.lastData.longitude, Input.location.lastData.latitude, Input.location.lastData.altitude),
                 0, 0, false);
         }
 
-        // Disable service to save battery
-        Input.location.Stop();
+        if (DisableLocationTracking)
+        {
+            // Disable service to save battery
+            Input.location.Stop();
+        }
     }
 }
